@@ -28,6 +28,7 @@ public class Analyzer {
 
         String rootPath = props.getProperty("path.folder");
         rootFolder = new File(rootPath.substring(0, rootPath.lastIndexOf(File.separator)));
+        System.out.println("Root Folder: " + rootFolder.getAbsolutePath());
     }
 
     public void generateReport(){
