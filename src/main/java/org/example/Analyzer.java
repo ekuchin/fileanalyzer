@@ -26,8 +26,7 @@ public class Analyzer {
         ALLOW_SYMBOLS = props.getProperty("allow.symbols");
         REPORT_PATH = props.getProperty("path.report");
 
-        File file = new File(props.getProperty("path.folder"));
-        String rootPath = file.getAbsolutePath();
+        String rootPath = props.getProperty("path.folder");
         rootFolder = new File(rootPath.substring(0, rootPath.lastIndexOf(File.separator)));
     }
 
