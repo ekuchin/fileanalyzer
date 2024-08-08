@@ -112,20 +112,20 @@ public class Analyzer {
                 : filename;
 
         String extension = (filename.contains("."))
-                ? filename.substring(filename.lastIndexOf(".")+1)
+                ? filename.substring(filename.lastIndexOf(".") + 1)
                 : filename;
 
-            if (!ALLOW_EXTENSIONS.contains(extension)) cssclass_file = "wrong";
-            if (filename_wo_ext.length() > MAX_FILENAME_LENGTH) cssclass_file = "wrong";
+        if (!ALLOW_EXTENSIONS.contains(extension)) cssclass_file = "wrong";
+        if (filename.length() > MAX_FILENAME_LENGTH) cssclass_file = "wrong";
 
-            result.append(String.format("<span class=\"%s\">[%s] </span>", cssclass_file, filename_wo_ext.length()));
+        result.append(String.format("<span class=\"%s\">[%s] </span>", cssclass_file, filename_wo_ext.length()));
     }
 
     private void generateDirectorySecondMark(StringBuilder result, int offset) {
 
         // Assert for illegal symbols and nesting depth
 
-        int level = offset / REPORT_STEP - 1;
+        int level = offset / REPORT_STEP;
         String css_nesting = level > MAX_FOLDER_NESTING_LEVEL ? "wrong" : "corr";
         result.append(String.format("<span class=\"%s\">(%s) </span>", css_nesting, level));
 
