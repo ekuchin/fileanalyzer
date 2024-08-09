@@ -18,8 +18,9 @@ public class Analyzer {
     private String REPORT_PATH;
     private String ROOT_PATH;
     private List<String> ALLOW_EXTENSIONS;
-
     private File rootFolder;
+
+    private enum Label {OK, WARNING, ERROR}
 
     public Analyzer(Properties props) {
         REPORT_STEP = Integer.parseInt(props.getProperty("report.step"));
@@ -72,63 +73,73 @@ public class Analyzer {
     private String generateLogEntry(File file, int offset) {
 
         StringBuilder result = new StringBuilder();
-        result.append(file.isDirectory() ? "<h3>" : "<p>");
+        result.append(file.isDirectory() ? "<h3" : "<p");
+        result.append(String.format(" style=\"margin-left:%spx\">", offset));
 
-        String filepath_wo_root = file.getAbsolutePath().length() > ROOT_PATH.length()
+        String filename = file.getName();
+
+        String filepathWithoutRoot = file.getAbsolutePath().length() > ROOT_PATH.length()
                 ? file.getAbsolutePath().substring((int) ROOT_PATH.length())
                 : ROOT_PATH;
-        generateFirstMark(result, filepath_wo_root, offset);
-
-        if (file.isDirectory()) generateDirectorySecondMark(result, offset);
-        else generateFileSecondMark(result, file.getName());
-
-        result.append(filepath_wo_root);
-        result.append(file.isDirectory() ? "</h3>" : "</p>");
-        return result.append("\n").toString();
-    }
-
-    private void generateFirstMark(StringBuilder result, String filepathWoRoot, int offset) {
-
-        // Assert for illegal symbols and common length, written in []
-
-        String cssclass_dir = "corr";
-        if (!filepathWoRoot.matches(ALLOW_SYMBOLS)) cssclass_dir = "warning";
-        if (filepathWoRoot.length() > MAX_PATH_LENGTH) cssclass_dir = "wrong";
-
-        String margin = Integer.toString(offset);
-        result.append(String.format("<span style=\"margin-left:%spx;\" class=\"%s\">", margin, cssclass_dir));
-        result.append(String.format("[%s] ", filepathWoRoot.length()));
-        result.append("</span>");
-    }
-
-    private void generateFileSecondMark(StringBuilder result, String filename) {
-
-        // Assert for illegal extensions and filename length
-
-        String cssclass_file = "corr";
-
-        String filename_wo_ext = (filename.contains("."))
-                ? filename.substring(0, filename.lastIndexOf("."))
-                : filename;
 
         String extension = (filename.contains("."))
                 ? filename.substring(filename.lastIndexOf(".") + 1)
                 : filename;
 
-        if (!ALLOW_EXTENSIONS.contains(extension)) cssclass_file = "wrong";
-        if (filename.length() > MAX_FILENAME_LENGTH) cssclass_file = "wrong";
+        // Relative path length
+        generateMark(
+                result,
+                String.valueOf(filepathWithoutRoot.length()),
+                filepathWithoutRoot.length() > MAX_PATH_LENGTH ? Label.ERROR : Label.OK
+        );
+        // Filename length
+        generateMark(
+                result,
+                String.valueOf(filename.length()),
+                filename.length() > MAX_FILENAME_LENGTH ? Label.ERROR : Label.OK
+        );
+        // Directory depth
+        if (!file.isDirectory()) {
+            generateMark(
+                    result,
+                    String.valueOf(offset / REPORT_STEP - 1),
+                    offset / REPORT_STEP > MAX_FOLDER_NESTING_LEVEL + 1 ? Label.ERROR : Label.OK
+            );
+        }
+        // Illegal symbols
+        generateMark(
+                result,
+                "abc",
+                !filename.matches(ALLOW_SYMBOLS) ? Label.WARNING : Label.OK
+        );
+        // Illegal extensions
+        if (!file.isDirectory()) {
+            generateMark(
+                    result,
+                    "ext",
+                    (!ALLOW_EXTENSIONS.contains(extension)) ? Label.WARNING : Label.OK
+            );
+        }
 
-        result.append(String.format("<span class=\"%s\">[%s] </span>", cssclass_file, filename_wo_ext.length()));
+        result.append(filepathWithoutRoot);
+        result.append(file.isDirectory() ? "</h3>" : "</p>");
+        return result.append("\n").toString();
     }
 
-    private void generateDirectorySecondMark(StringBuilder result, int offset) {
+    private void generateMark(StringBuilder result, String label, Label type) {
+        String cssClass = "corr";
+        switch (type) {
+            case WARNING:
+                cssClass = "warning";
+                break;
+            case ERROR:
+                cssClass = "wrong";
+                break;
+        }
 
-        // Assert for illegal symbols and nesting depth
-
-        int level = offset / REPORT_STEP;
-        String css_nesting = level > MAX_FOLDER_NESTING_LEVEL ? "wrong" : "corr";
-        result.append(String.format("<span class=\"%s\">(%s) </span>", css_nesting, level));
-
+        result.append(String.format("<span class=\"%s\">", cssClass));
+        result.append(String.format("[%s] ", label));
+        result.append("</span>");
     }
 
 }
